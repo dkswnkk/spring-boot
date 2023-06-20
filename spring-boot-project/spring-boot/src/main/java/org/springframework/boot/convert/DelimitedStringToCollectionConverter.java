@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.core.CollectionFactory;
@@ -66,13 +67,11 @@ final class DelimitedStringToCollectionConverter implements ConditionalGenericCo
 		Delimiter delimiter = targetType.getAnnotation(Delimiter.class);
 		String[] elements = getElements(source, (delimiter != null) ? delimiter.value() : ",");
 		TypeDescriptor elementDescriptor = targetType.getElementTypeDescriptor();
-		Collection<Object> target = createCollection(targetType, elementDescriptor, elements.length);
 		Stream<Object> stream = Arrays.stream(elements).map(String::trim);
 		if (elementDescriptor != null) {
 			stream = stream.map((element) -> this.conversionService.convert(element, sourceType, elementDescriptor));
 		}
-		stream.forEach(target::add);
-		return target;
+		return stream.collect(Collectors.toCollection(() -> createCollection(targetType, elementDescriptor, elements.length)));
 	}
 
 	private Collection<Object> createCollection(TypeDescriptor targetType, TypeDescriptor elementDescriptor,
